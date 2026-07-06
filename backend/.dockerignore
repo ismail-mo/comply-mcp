@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+firebase-key.json
+uploads/
+*.egg-info/
+.git/
+embed/
+audits/
+docs/
