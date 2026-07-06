@@ -43,6 +43,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   isStreaming?: boolean;
+  status?: string | null;
   table?: ComplianceRow[];
   citations?: ActiveCitation[];
 }
@@ -54,10 +55,14 @@ export interface ChatRequest {
 }
 
 export interface ChatStreamChunk {
-  type: 'token' | 'done' | 'error' | 'table';
+  type: 'token' | 'done' | 'error' | 'table' | 'status' | 'reset_text';
   content?: string;
   message?: string;
   data?: ComplianceRow[];
+}
+
+export interface ChatMessageStatus {
+  text: string;
 }
 
 export interface HealthResponse {

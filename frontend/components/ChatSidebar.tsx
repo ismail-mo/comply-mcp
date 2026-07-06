@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { memo, useCallback, useRef, useEffect, useState } from 'react';
 import type { UploadedFile, ChatMessage, ComplianceRow, ActiveCitation } from '../lib/types';
 
 const COMPLIANCE_CHIPS = [
@@ -38,8 +38,51 @@ const COMPLIANCE_CHIPS = [
   },
 ];
 
-const getSummaryText = (content: string): string =>
-  content.replace(/<table>[\s\S]*?<\/table>/g, '').trim();
+/** Strip complete AND partially-streamed <table> blocks. Partial blocks can
+ *  survive into settled messages when a stream is interrupted mid-table. */
+const getSummaryText = (content: string): string => {
+  const complete = content.replace(/<table>[\s\S]*?<\/table>/g, '');
+  const openIndex = complete.indexOf('<table>');
+  return (openIndex === -1 ? complete : complete.slice(0, openIndex)).trim();
+};
+const getStreamingText = getSummaryText;
+
+/** Render **bold** spans inside a text fragment. */
+function RichText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        const bold = part.match(/^\*\*([^*]+)\*\*$/);
+        if (bold) {
+          return (
+            <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
+              {bold[1]}
+            </strong>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        fontSize: '9px',
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.12em',
+        color: 'var(--text-muted)',
+        marginBottom: '6px',
+        fontFamily: 'IBM Plex Mono, monospace',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 function StatusBadge({ status }: { status: string }) {
   const bg =
@@ -182,7 +225,7 @@ function SummaryText({
     >
       {parts.map((part, i) => {
         const match = part.match(/^\[(\d+)\]$/);
-        if (!match) return <span key={i}>{part}</span>;
+        if (!match) return <RichText key={i} text={part} />;
         const n = parseInt(match[1]);
         const row = table[n - 1];
         if (!row || !row.project_file_id || !row.source_page || !row.highlight_start || !row.highlight_end) {
@@ -234,7 +277,8 @@ function SummaryText({
   );
 }
 
-const COL = '60px 100px 1fr 120px 100px 80px 120px';
+const COL = '56px 110px 250px 210px 110px 90px 190px';
+const TABLE_MIN_WIDTH = '1016px';
 const TABLE_HEADERS = ['Status', 'Category', 'Issue', 'Reference', 'Clause', 'Party', 'Action'];
 const STATUS_ORDER: Record<string, number> = { FAIL: 0, WARN: 1, PASS: 2 };
 
@@ -265,7 +309,7 @@ function ComplianceTable({
           gridTemplateColumns: COL,
           background: 'var(--bg-panel)',
           borderBottom: '1px solid var(--border)',
-          minWidth: '680px',
+          minWidth: TABLE_MIN_WIDTH,
         }}
       >
         {TABLE_HEADERS.map((h) => (
@@ -289,19 +333,14 @@ function ComplianceTable({
       {sorted.map((row, idx) => (
         <div
           key={idx}
+          className="comply-table-row"
           style={{
             display: 'grid',
             gridTemplateColumns: COL,
             borderBottom: idx < sorted.length - 1 ? '1px solid var(--border)' : 'none',
             padding: '8px',
-            minWidth: '680px',
+            minWidth: TABLE_MIN_WIDTH,
             transition: 'background 0.1s',
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-hover)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLDivElement).style.background = 'transparent';
           }}
         >
           {/* Status */}
@@ -395,7 +434,7 @@ function ComplianceTable({
   );
 }
 
-function AssistantMessage({
+const AssistantMessage = memo(function AssistantMessage({
   message,
   onCitationClick,
 }: {
@@ -404,8 +443,9 @@ function AssistantMessage({
 }) {
   const isStreaming = message.isStreaming === true;
   const hasTable = !isStreaming && !!message.table && message.table.length > 0;
-  const summaryText = getSummaryText(message.content);
-  const streamingText = summaryText || 'Preparing compliance check...';
+  const summaryText = isStreaming
+    ? getStreamingText(message.content)
+    : getSummaryText(message.content);
 
   return (
     <div
@@ -437,35 +477,56 @@ function AssistantMessage({
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {isStreaming ? (
-          <div
-            style={{
-              fontSize: '12px',
-              color: 'var(--text-primary)',
-              lineHeight: '1.6',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
-            {streamingText}
-            <span
-              className="comply-cursor"
+          <div>
+            {summaryText ? (
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--text-primary)',
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                }}
+              >
+                <RichText text={summaryText} />
+                <span
+                  className="comply-cursor"
+                  style={{
+                    display: 'inline-block',
+                    width: '2px',
+                    height: '12px',
+                    background: 'var(--accent)',
+                    marginLeft: '2px',
+                    verticalAlign: 'middle',
+                  }}
+                />
+              </div>
+            ) : null}
+            {/* Live tool/status line */}
+            <div
               style={{
-                display: 'inline-block',
-                width: '2px',
-                height: '12px',
-                background: 'var(--accent)',
-                marginLeft: '2px',
-                verticalAlign: 'middle',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginTop: summaryText ? '8px' : '0',
+                color: 'var(--text-muted)',
+                fontSize: '11px',
+                fontFamily: 'IBM Plex Mono, monospace',
               }}
-            />
+            >
+              <span className="comply-spinner" />
+              {message.status ?? (summaryText ? 'Working…' : 'Preparing compliance check…')}
+            </div>
           </div>
         ) : hasTable ? (
           <>
+            <SectionLabel>Summary</SectionLabel>
             <SummaryText
               text={summaryText}
               table={message.table!}
               onCitationClick={onCitationClick}
             />
+            <SectionLabel>Findings — {message.table!.length}</SectionLabel>
             <ComplianceTable rows={message.table!} onCitationClick={onCitationClick} />
           </>
         ) : (
@@ -478,13 +539,13 @@ function AssistantMessage({
               wordBreak: 'break-word',
             }}
           >
-            {summaryText}
+            <RichText text={summaryText} />
           </div>
         )}
       </div>
     </div>
   );
-}
+});
 
 interface ChatSidebarProps {
   activeFile: UploadedFile | null;
@@ -509,8 +570,19 @@ export default function ChatSidebar({
   const [isComposing, setIsComposing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesBoxRef = useRef<HTMLDivElement>(null);
+  const pinnedToBottom = useRef(true);
+
+  // Track whether the user has scrolled away from the bottom.
+  const handleMessagesScroll = useCallback(() => {
+    const el = messagesBoxRef.current;
+    if (!el) return;
+    pinnedToBottom.current =
+      el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+  }, []);
 
   useEffect(() => {
+    pinnedToBottom.current = true;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
@@ -518,10 +590,12 @@ export default function ChatSidebar({
   const lastContentLength = lastMessage?.content?.length ?? 0;
   const scrollRaf = useRef<number | null>(null);
   useEffect(() => {
-    if (!streaming) return;
+    if (!streaming || !pinnedToBottom.current) return;
     if (scrollRaf.current) cancelAnimationFrame(scrollRaf.current);
     scrollRaf.current = requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
+      if (pinnedToBottom.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
+      }
     });
     return () => {
       if (scrollRaf.current) cancelAnimationFrame(scrollRaf.current);
@@ -592,6 +666,16 @@ export default function ChatSidebar({
           50% { opacity: 0.4; }
         }
         .comply-send-pulse { animation: pulse-opacity 1s ease-in-out infinite; }
+        @keyframes comply-spin { to { transform: rotate(360deg); } }
+        .comply-spinner {
+          width: 10px; height: 10px; flex-shrink: 0;
+          border: 1.5px solid var(--border);
+          border-top-color: var(--accent);
+          border-radius: 50%;
+          display: inline-block;
+          animation: comply-spin 0.8s linear infinite;
+        }
+        .comply-table-row:hover { background: var(--bg-hover); }
         .comply-messages::-webkit-scrollbar { width: 4px; }
         .comply-messages::-webkit-scrollbar-track { background: transparent; }
         .comply-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -710,6 +794,8 @@ export default function ChatSidebar({
         {/* MESSAGE AREA */}
         <div
           className="comply-messages"
+          ref={messagesBoxRef}
+          onScroll={handleMessagesScroll}
           style={{ flexGrow: 1, overflowY: 'auto', padding: '12px' }}
         >
           {messages.length === 0 ? (

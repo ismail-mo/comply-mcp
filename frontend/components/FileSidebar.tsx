@@ -63,17 +63,40 @@ function FileItem({ file, active, onSelect, onDelete }: FileItemProps) {
         </p>
       </div>
 
+      {file.rag_status === 'pending' && (
+        <span
+          className="shrink-0 animate-pulse text-[8px] uppercase"
+          style={{ color: 'var(--warning)' }}
+          title="Indexing document for search…"
+        >
+          ●
+        </span>
+      )}
+      {file.rag_status === 'failed' && (
+        <span
+          className="shrink-0 text-[8px] uppercase"
+          style={{ color: 'var(--danger)' }}
+          title={`Indexing failed${file.rag_error ? `: ${file.rag_error}` : ''}`}
+        >
+          ●
+        </span>
+      )}
       <span
         className="shrink-0 text-[8px] uppercase px-1.5 py-0.5"
-        style={{
-          color: file.classification === 'STANDARD' ? '#a78bfa' : 'var(--accent)',
-          border: `1px solid ${
-            file.classification === 'STANDARD'
-              ? 'rgba(167, 139, 250, 0.45)'
-              : 'rgba(96, 165, 250, 0.45)'
-          }`,
-        }}
-        title={file.classification === 'STANDARD' ? 'Standard document' : 'Project document'}
+        style={
+          file.classification === 'STANDARD'
+            ? { color: '#a78bfa', border: '1px solid rgba(167, 139, 250, 0.45)' }
+            : file.classification === 'UNKNOWN'
+              ? { color: 'var(--text-muted)', border: '1px solid var(--border)' }
+              : { color: 'var(--accent)', border: '1px solid rgba(232, 240, 74, 0.4)' }
+        }
+        title={
+          file.classification === 'STANDARD'
+            ? 'Standard document'
+            : file.classification === 'UNKNOWN'
+              ? 'Unclassified document'
+              : 'Project document'
+        }
       >
         {file.classification === 'STANDARD' ? 'STD' : file.classification === 'UNKNOWN' ? 'UNK' : 'PRJ'}
       </span>

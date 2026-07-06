@@ -56,5 +56,12 @@ export function useFiles() {
     fetchFiles();
   }, [fetchFiles]);
 
+  // While any file is still indexing (rag_status pending), poll for updates.
+  useEffect(() => {
+    if (!files.some((f) => f.rag_status === 'pending')) return;
+    const timer = setInterval(fetchFiles, 3000);
+    return () => clearInterval(timer);
+  }, [files, fetchFiles]);
+
   return { files, loading, error, uploading, fetchFiles, upload, remove, clearError };
 }

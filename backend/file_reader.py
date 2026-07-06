@@ -8,22 +8,6 @@ import openpyxl
 logger = logging.getLogger("comply.reader")
 
 
-def read_pdf(file_path: str) -> str:
-    path = Path(file_path)
-    try:
-        reader = pypdf.PdfReader(str(path))
-        pages = []
-        for index, page in enumerate(reader.pages, start=1):
-            text = page.extract_text()
-            if text:
-                pages.append(f"[PAGE {index}]\n{text.strip()}")
-        result = "\n".join(pages)
-        logger.info("PDF read: %s (%d pages extracted)", path.name, len(pages))
-        return result
-    except Exception as exc:
-        raise ValueError(f"Could not read PDF '{path}': {exc}") from exc
-
-
 def read_pdf_sample(file_path: str, max_pages: int = 3) -> str:
     """Extract first max_pages pages with layout-aware spacing for classification."""
     path = Path(file_path)
@@ -101,9 +85,10 @@ def read_excel(file_path: str) -> str:
 
 
 def read_file(file_path: str, file_type: str) -> str:
-    if file_type == "pdf":
-        return read_pdf(file_path)
-    elif file_type == "excel":
+    # Whole-PDF reads were removed deliberately: PDF content only enters the
+    # system through chunked RAG retrieval (services/rag.py -> project_chunks).
+    if file_type == "excel":
         return read_excel(file_path)
-    else:
-        raise ValueError(f"Unrecognised file_type '{file_type}': expected 'pdf' or 'excel'")
+    raise ValueError(
+        f"Unsupported file_type '{file_type}': whole-document PDF reads are not allowed"
+    )

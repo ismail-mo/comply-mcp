@@ -63,7 +63,7 @@ export default function Page() {
         <ChatSidebar
           activeFile={activeFile}
           messages={messages}
-          onSend={(msg, visibleMsg) => sendMessage(msg, visibleMsg, activeFile?.file_id ?? null)}
+          onSend={(msg, visibleMsg) => sendMessage(msg, visibleMsg, activeFile?.file_id ?? null, files)}
           streaming={streaming}
           onClearHistory={clearHistory}
           onCitationClick={handleCitationClick}

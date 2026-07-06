@@ -92,7 +92,12 @@ export function useChat() {
   );
 
   const sendMessage = useCallback(
-    async (message: string, visibleMessage?: string, activeFileId?: string | null): Promise<void> => {
+    async (
+      message: string,
+      visibleMessage?: string,
+      activeFileId?: string | null,
+      availableFiles?: UploadedFile[]
+    ): Promise<void> => {
       if (streaming) return;
       const visibleContent = getVisibleContent(message, visibleMessage);
 
@@ -110,8 +115,18 @@ export function useChat() {
       };
 
       const snapshotMessages = messagesRef.current;
-      const snapshotProjectRefs = projectRefsRef.current;
-      const snapshotStandardRefs = standardRefsRef.current;
+      // Refs are derived from the CURRENT files list when provided (survives
+      // page reloads); the upload-time ref state is only a fallback.
+      const snapshotProjectRefs: ProjectRef[] = availableFiles
+        ? availableFiles
+            .filter((f) => f.classification !== 'STANDARD')
+            .map((f) => ({ file_id: f.file_id, filename: f.filename }))
+        : projectRefsRef.current;
+      const snapshotStandardRefs: StandardRef[] = availableFiles
+        ? availableFiles
+            .filter((f) => f.classification === 'STANDARD')
+            .map((f) => ({ file_id: f.file_id, filename: f.filename }))
+        : standardRefsRef.current;
 
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
 
@@ -217,9 +232,13 @@ export function useChat() {
           setMessages((prev) => {
             const updated = [...prev];
             const last = updated[updated.length - 1];
+            // Store RAW content — stripping happens at render time. Stripping
+            // here destroys the <table> marker, which made subsequent table
+            // tokens render as raw JSON.
             updated[updated.length - 1] = {
               ...last,
-              content: stripStreamingTable(last.content + token),
+              content: last.content + token,
+              status: null,
             };
             return updated;
           });
@@ -229,7 +248,7 @@ export function useChat() {
           setMessages((prev) => {
             const updated = [...prev];
             const last = updated[updated.length - 1];
-            updated[updated.length - 1] = { ...last, isStreaming: false };
+            updated[updated.length - 1] = { ...last, isStreaming: false, status: null };
             return updated;
           });
           setStreaming(false);
@@ -242,12 +261,35 @@ export function useChat() {
               ...last,
               content: `Error: ${errorMessage}`,
               isStreaming: false,
+              status: null,
             };
             return updated;
           });
           setStreaming(false);
         },
-        controller.signal
+        controller.signal,
+        (statusText) => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            if (last && last.role === 'assistant' && last.isStreaming) {
+              updated[updated.length - 1] = { ...last, status: statusText };
+            }
+            return updated;
+          });
+        },
+        () => {
+          // Narration from a tool-calling round — clear it; the status
+          // line stands in until the final response streams.
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            if (last && last.role === 'assistant' && last.isStreaming) {
+              updated[updated.length - 1] = { ...last, content: '' };
+            }
+            return updated;
+          });
+        }
       );
     },
     [streaming]

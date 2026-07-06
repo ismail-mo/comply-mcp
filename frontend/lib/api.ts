@@ -38,20 +38,15 @@ export async function deleteFile(file_id: string): Promise<void> {
   if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 
-export async function getFileContent(file_id: string): Promise<string> {
-  const res = await fetch(`${BASE_URL}/files/${encodeURIComponent(file_id)}/content`);
-  if (!res.ok) throw new Error(`Failed to fetch file content: ${res.status}`);
-  const data = await res.json();
-  return data.content as string;
-}
-
 export async function streamChat(
   request: ChatRequest,
   onToken: (token: string) => void,
   onTable: (table: ComplianceRow[]) => void,
   onDone: () => void,
   onError: (message: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onStatus?: (status: string) => void,
+  onResetText?: () => void
 ): Promise<void> {
   let res: Response;
 
@@ -112,6 +107,10 @@ export async function streamChat(
 
         if (chunk.type === 'token' && chunk.content !== undefined) {
           onToken(chunk.content);
+        } else if (chunk.type === 'status' && chunk.message) {
+          onStatus?.(chunk.message);
+        } else if (chunk.type === 'reset_text') {
+          onResetText?.();
         } else if (chunk.type === 'table' && chunk.data) {
           onTable(chunk.data);
         } else if (chunk.type === 'done') {
