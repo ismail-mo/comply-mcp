@@ -6,29 +6,67 @@ export interface UploadedFile {
   rag_status?: 'not_applicable' | 'pending' | 'embedded' | 'failed';
   rag_collection?: string | null;
   rag_error?: string | null;
+  /** Stage 0 result — present only on the upload response for a PROJECT pdf */
+  indexed_elements?: { type: string; designation?: string | null }[] | null;
 }
 
-export interface ComplianceRow {
-  // verdict
-  status: 'FAIL' | 'WARN' | 'PASS';
-  category: string;
+/* ── Audit output (deterministic engine contract) ── */
+
+export type AuditStatus =
+  | 'FAIL' | 'ERROR' | 'CONFLICT' | 'MISSING' | 'ASSUMED' | 'WARNING' | 'PASS';
+
+export type CiteBadge = 'ec3' | 'en1990' | 'en10025' | 'report' | 'sbb';
+
+export interface AuditReference {
+  quote: string | null;
+  clause: string;
+  page: number | null;
+  source: string | null;
+}
+
+export interface AuditCalc {
+  label: string;
+  lines: string[];
+}
+
+export interface AuditFinding {
+  check_id: string;
+  status: AuditStatus;
+  name: string;
+  category_sub: string;
+  clause: string;
+  badge: CiteBadge;
   issue: string;
-  party_affected: string;
-  recommendation: string;
-
-  // PROJECT citation — where problem was found
-  project_file_id: string | null;
-  reference_text: string | null;
-  source_page: number | null;
-  highlight_start: string | null;
-  highlight_end: string | null;
-
-  // STANDARD citation — what was violated
-  standard_file_id: string | null;
-  standard_clause: string | null;
-  standard_page: number | null;
-  standard_text: string | null;
+  action: string;
+  reference: AuditReference;
+  calc: AuditCalc | null;
+  metrics: Record<string, number | string | null>;
+  assumed_inputs: string[];
+  element?: string;
+  designation?: string | null;
 }
+
+export interface AuditFindingsPayload {
+  title: string;
+  subtitle: string;
+  document: string;
+  file_id: string;
+  pills: Partial<Record<AuditStatus, number>>;
+  findings: AuditFinding[];
+}
+
+export interface AuditOverviewPayload {
+  overview: string;
+  recommended_actions: string[];
+}
+
+export interface QuickRef {
+  clause: string | null;
+  source: string | null;
+  page: number | null;
+}
+
+/* ── Citation navigation (PDF viewer) ── */
 
 export interface ActiveCitation {
   type: 'project' | 'standard';
@@ -38,14 +76,18 @@ export interface ActiveCitation {
   highlight_end: string;
 }
 
+/* ── Chat ── */
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   isStreaming?: boolean;
   status?: string | null;
-  table?: ComplianceRow[];
-  citations?: ActiveCitation[];
+  auditFindings?: AuditFindingsPayload | null;
+  auditOverview?: AuditOverviewPayload | null;
+  quickRefs?: QuickRef[] | null;
+  timing?: Record<string, number> | null;
 }
 
 export interface ChatRequest {
@@ -55,14 +97,14 @@ export interface ChatRequest {
 }
 
 export interface ChatStreamChunk {
-  type: 'token' | 'done' | 'error' | 'table' | 'status' | 'reset_text';
+  type:
+    | 'token' | 'done' | 'error' | 'status'
+    | 'findings' | 'overview' | 'quick_refs'
+    | 'table' | 'reset_text'; // legacy, tolerated
   content?: string;
   message?: string;
-  data?: ComplianceRow[];
-}
-
-export interface ChatMessageStatus {
-  text: string;
+  data?: unknown;
+  timing?: Record<string, number>;
 }
 
 export interface HealthResponse {
@@ -70,11 +112,10 @@ export interface HealthResponse {
   mcp_connected: boolean;
   mcp_pid: number | null;
   tools: string[];
-  cache_size: {
-    coords: number;
-    in_flight_chats: number;
-  };
+  cache_size: { coords: number };
 }
+
+/* ── PDF coordinates ── */
 
 export interface PdfWord {
   text: string;

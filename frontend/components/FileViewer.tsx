@@ -43,11 +43,11 @@ export const FileViewer = memo(function FileViewer({ activeFile, activeCitation,
   }, [activeCitation?.file_id, activeFile?.file_id, files, onViewerSwitch]);
 
   return (
-    <div className="flex h-full flex-col" style={{ background: 'var(--bg-base)' }}>
+    <div className="flex h-full flex-col" style={{ background: 'var(--surface-0)' }}>
       {/* Header */}
       <div
         className="flex shrink-0 items-center justify-between px-4 py-3"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border)' }}
       >
         <span
           className="text-[12px]"
@@ -58,11 +58,11 @@ export const FileViewer = memo(function FileViewer({ activeFile, activeCitation,
 
         {activeFile && (
           <span
-            className="text-[9px] uppercase px-2 py-0.5"
+            className="text-[9px] uppercase px-2 py-0.5 rounded"
             style={
               activeFile.type === 'pdf'
-                ? { color: 'var(--danger)', border: '1px solid rgba(248,113,113,0.4)' }
-                : { color: 'var(--success)', border: '1px solid rgba(74,222,128,0.4)' }
+                ? { color: 'var(--fail-fg)', background: 'var(--fail-bg)' }
+                : { color: 'var(--pass-fg)', background: 'var(--pass-bg)' }
             }
           >
             {activeFile.type === 'pdf' ? 'PDF' : 'XLS'}

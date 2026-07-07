@@ -1,4 +1,11 @@
-import type { ChatRequest, ChatStreamChunk, ComplianceRow, UploadedFile } from './types';
+import type {
+  AuditFindingsPayload,
+  AuditOverviewPayload,
+  ChatRequest,
+  ChatStreamChunk,
+  QuickRef,
+  UploadedFile,
+} from './types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -12,10 +19,7 @@ export async function uploadFile(file: File): Promise<UploadedFile> {
   const form = new FormData();
   form.append('file', file);
 
-  const res = await fetch(`${BASE_URL}/upload`, {
-    method: 'POST',
-    body: form,
-  });
+  const res = await fetch(`${BASE_URL}/upload`, { method: 'POST', body: form });
 
   if (!res.ok) {
     let detail: string | undefined;
@@ -38,15 +42,20 @@ export async function deleteFile(file_id: string): Promise<void> {
   if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 
+export interface StreamHandlers {
+  onToken: (token: string) => void;
+  onStatus?: (status: string) => void;
+  onFindings?: (data: AuditFindingsPayload) => void;
+  onOverview?: (data: AuditOverviewPayload) => void;
+  onQuickRefs?: (refs: QuickRef[]) => void;
+  onDone: (timing?: Record<string, number>) => void;
+  onError: (message: string) => void;
+}
+
 export async function streamChat(
   request: ChatRequest,
-  onToken: (token: string) => void,
-  onTable: (table: ComplianceRow[]) => void,
-  onDone: () => void,
-  onError: (message: string) => void,
-  signal?: AbortSignal,
-  onStatus?: (status: string) => void,
-  onResetText?: () => void
+  handlers: StreamHandlers,
+  signal?: AbortSignal
 ): Promise<void> {
   let res: Response;
 
@@ -62,21 +71,21 @@ export async function streamChat(
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      onDone();
+      handlers.onDone();
       return;
     }
-    onError(err instanceof Error ? err.message : String(err));
+    handlers.onError(err instanceof Error ? err.message : String(err));
     return;
   }
 
   if (!res.ok) {
-    onError(`Chat request failed: ${res.status}`);
+    handlers.onError(`Chat request failed: ${res.status}`);
     return;
   }
 
   const reader = res.body?.getReader();
   if (!reader) {
-    onError('No response body');
+    handlers.onError('No response body');
     return;
   }
 
@@ -105,36 +114,49 @@ export async function streamChat(
           continue;
         }
 
-        if (chunk.type === 'token' && chunk.content !== undefined) {
-          onToken(chunk.content);
-        } else if (chunk.type === 'status' && chunk.message) {
-          onStatus?.(chunk.message);
-        } else if (chunk.type === 'reset_text') {
-          onResetText?.();
-        } else if (chunk.type === 'table' && chunk.data) {
-          onTable(chunk.data);
-        } else if (chunk.type === 'done') {
-          terminalReceived = true;
-          onDone();
-        } else if (chunk.type === 'error') {
-          terminalReceived = true;
-          const msg = chunk.message ?? 'Unknown error';
-          onError(
-            msg.toLowerCase().includes('rate limit')
-              ? 'Rate limit reached — please wait a moment and try again.'
-              : msg
-          );
+        switch (chunk.type) {
+          case 'token':
+            if (chunk.content !== undefined) handlers.onToken(chunk.content);
+            break;
+          case 'status':
+            if (chunk.message) handlers.onStatus?.(chunk.message);
+            break;
+          case 'findings':
+            if (chunk.data) handlers.onFindings?.(chunk.data as AuditFindingsPayload);
+            break;
+          case 'overview':
+            if (chunk.data) handlers.onOverview?.(chunk.data as AuditOverviewPayload);
+            break;
+          case 'quick_refs':
+            if (chunk.data) handlers.onQuickRefs?.(chunk.data as QuickRef[]);
+            break;
+          case 'done':
+            terminalReceived = true;
+            handlers.onDone(chunk.timing);
+            break;
+          case 'error': {
+            terminalReceived = true;
+            const msg = chunk.message ?? 'Unknown error';
+            handlers.onError(
+              msg.toLowerCase().includes('rate limit')
+                ? 'Rate limit reached — please wait a moment and try again.'
+                : msg
+            );
+            break;
+          }
+          default:
+            break; // legacy events ignored
         }
       }
     }
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') return;
     terminalReceived = true;
-    onError(err instanceof Error ? err.message : String(err));
+    handlers.onError(err instanceof Error ? err.message : String(err));
   } finally {
     reader.releaseLock();
     if (!terminalReceived) {
-      onDone();
+      handlers.onDone();
     }
   }
 }

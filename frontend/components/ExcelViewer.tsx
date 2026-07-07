@@ -79,7 +79,7 @@ const S = {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    background: 'var(--bg-base)',
+    background: 'var(--surface-0)',
     color: 'var(--text-primary)',
     fontSize: 12,
   } as React.CSSProperties,
@@ -97,29 +97,30 @@ const S = {
     gap: 8,
     padding: '5px 10px',
     borderBottom: '1px solid var(--border)',
-    background: 'var(--bg-panel)',
+    background: 'var(--surface-1)',
     flexShrink: 0,
   } as React.CSSProperties,
   cellRef: {
     minWidth: 52,
     textAlign: 'center',
     fontSize: 11,
-    color: 'var(--accent)',
-    border: '1px solid var(--border)',
+    color: 'var(--text-accent)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 3,
     padding: '3px 6px',
-    background: 'var(--bg-base)',
+    background: 'var(--surface-2)',
+    fontFamily: 'var(--font-mono)',
   } as React.CSSProperties,
   formulaInput: {
     flex: 1,
-    background: 'var(--bg-base)',
-    border: '1px solid var(--border)',
+    background: 'var(--surface-2)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 3,
     color: 'var(--text-primary)',
     fontSize: 12,
     padding: '3px 8px',
     outline: 'none',
-    fontFamily: 'inherit',
+    fontFamily: 'var(--font-mono)',
   } as React.CSSProperties,
   gridWrap: {
     flex: 1,
@@ -132,7 +133,7 @@ const S = {
     position: 'sticky',
     top: 0,
     zIndex: 3,
-    background: 'var(--bg-panel)',
+    background: 'var(--surface-1)',
     borderBottom: '1px solid var(--border)',
     width: 'max-content',
     minWidth: '100%',
@@ -144,7 +145,7 @@ const S = {
     position: 'sticky',
     left: 0,
     zIndex: 4,
-    background: 'var(--bg-panel)',
+    background: 'var(--surface-1)',
     borderRight: '1px solid var(--border)',
   } as React.CSSProperties,
   colHead: {
@@ -155,10 +156,10 @@ const S = {
     alignItems: 'center',
     justifyContent: 'flex-start',
     padding: '0 8px',
-    color: 'var(--text-muted)',
-    fontSize: 10,
+    color: 'var(--text-secondary)',
+    fontSize: 11,
     borderRight: '1px solid var(--border)',
-    background: 'var(--bg-panel)',
+    background: 'var(--surface-1)',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
   } as React.CSSProperties,
@@ -171,10 +172,11 @@ const S = {
     justifyContent: 'center',
     color: 'var(--text-muted)',
     fontSize: 10,
+    fontFamily: 'var(--font-mono)',
     position: 'sticky',
     left: 0,
     zIndex: 2,
-    background: 'var(--bg-panel)',
+    background: 'var(--surface-1)',
     borderRight: '1px solid var(--border)',
     borderBottom: '1px solid var(--border)',
   } as React.CSSProperties,
@@ -190,20 +192,22 @@ const S = {
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
     cursor: 'default',
-    fontSize: 11.5,
+    fontSize: 12,
+    fontFamily: 'var(--font-mono)',
+    color: 'var(--text-primary)',
   } as React.CSSProperties,
   cellSelected: {} as React.CSSProperties, // assigned below
   cellInput: {
     width: COL_WIDTH,
     minWidth: COL_WIDTH,
     height: ROW_HEIGHT,
-    border: '1.5px solid var(--accent)',
-    background: 'var(--bg-base)',
+    border: '2px solid var(--text-accent)',
+    background: 'var(--surface-2)',
     color: 'var(--text-primary)',
-    fontSize: 11.5,
+    fontSize: 12,
     padding: '0 6px',
     outline: 'none',
-    fontFamily: 'inherit',
+    fontFamily: 'var(--font-mono)',
     boxSizing: 'border-box',
   } as React.CSSProperties,
   tabs: {
@@ -211,15 +215,15 @@ const S = {
     gap: 2,
     padding: '4px 8px',
     borderTop: '1px solid var(--border)',
-    background: 'var(--bg-panel)',
+    background: 'var(--surface-1)',
     flexShrink: 0,
     overflowX: 'auto',
   } as React.CSSProperties,
   notice: {
     padding: '4px 12px',
     fontSize: 10,
-    color: 'var(--warning)',
-    background: 'var(--bg-panel)',
+    color: 'var(--error-fg)',
+    background: 'var(--error-bg)',
     borderBottom: '1px solid var(--border)',
     flexShrink: 0,
   } as React.CSSProperties,
@@ -230,17 +234,18 @@ const S = {
     padding: '6px 12px',
     fontSize: 11,
     borderRadius: 4,
-    border: '1px solid var(--border)',
-    background: 'var(--bg-panel)',
+    border: '1px solid var(--border-strong)',
+    background: 'var(--surface-2)',
+    boxShadow: '0 2px 8px rgba(26, 26, 24, 0.10)',
     zIndex: 20,
   } as React.CSSProperties,
 };
 
 S.cellSelected = {
   ...S.cell,
-  outline: '1.5px solid var(--accent)',
-  outlineOffset: -1.5,
-  background: 'var(--bg-hover)',
+  outline: '2px solid var(--text-accent)',
+  outlineOffset: -2,
+  background: 'rgba(24, 95, 165, 0.06)',
 };
 
 interface RowProps {
@@ -305,7 +310,7 @@ const GridRow = React.memo(function GridRow({
     }
   }
   return (
-    <div style={{ display: 'flex', width: 'max-content', minWidth: '100%' }}>
+    <div className="xl-row" style={{ display: 'flex', width: 'max-content', minWidth: '100%' }}>
       <div style={S.rowNum}>{rowIndex + 1}</div>
       {cells}
     </div>
@@ -504,7 +509,7 @@ export function ExcelViewer({ fileId }: { fileId: string }) {
   if (status.kind === 'error') {
     return (
       <div style={S.root}>
-        <div style={{ ...S.centered, color: 'var(--danger)' }}>
+        <div style={{ ...S.centered, color: 'var(--fail-fg)' }}>
           Failed to load spreadsheet — {status.message}
         </div>
       </div>
@@ -545,6 +550,7 @@ export function ExcelViewer({ fileId }: { fileId: string }) {
 
   return (
     <div style={{ ...S.root, position: 'relative' }}>
+      <style>{`.xl-row:hover { background: #F1EFE9; }`}</style>
       {/* Formula bar */}
       <div style={S.formulaBar}>
         <span style={S.cellRef}>
@@ -629,17 +635,16 @@ export function ExcelViewer({ fileId }: { fileId: string }) {
               if (gridRef.current) gridRef.current.scrollTop = 0;
             }}
             style={{
-              background: i === activeSheet ? 'var(--bg-base)' : 'transparent',
-              border: '1px solid var(--border)',
-              borderBottom:
-                i === activeSheet ? '1px solid var(--accent)' : '1px solid var(--border)',
+              background: i === activeSheet ? 'var(--surface-2)' : 'transparent',
+              border:
+                i === activeSheet ? '1px solid var(--border-strong)' : '1px solid var(--border)',
               color: i === activeSheet ? 'var(--text-primary)' : 'var(--text-muted)',
               fontSize: 11,
               padding: '3px 12px',
               cursor: 'pointer',
               borderRadius: '3px 3px 0 0',
               whiteSpace: 'nowrap',
-              fontFamily: 'inherit',
+              fontFamily: 'var(--font-sans)',
             }}
           >
             {s.name}
@@ -651,7 +656,7 @@ export function ExcelViewer({ fileId }: { fileId: string }) {
         <div
           style={{
             ...S.toast,
-            color: toast.ok ? 'var(--success)' : 'var(--danger)',
+            color: toast.ok ? 'var(--pass-fg)' : 'var(--fail-fg)',
           }}
         >
           {toast.text}

@@ -8,6 +8,7 @@ export function useFiles() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const fetchFiles = useCallback(async () => {
@@ -26,6 +27,15 @@ export function useFiles() {
       setUploading(true);
       try {
         const uploaded = await uploadFile(file);
+        const els = uploaded.indexed_elements;
+        if (els && els.length > 0) {
+          const parts = els.map((e) =>
+            e.designation ? `${e.type} (${e.designation})` : e.type
+          );
+          setNotice(
+            `Ready. ${els.length} element${els.length === 1 ? '' : 's'} indexed: ${parts.join(', ')}.`
+          );
+        }
         await fetchFiles();
         return uploaded;
       } catch (err) {
@@ -51,6 +61,7 @@ export function useFiles() {
   );
 
   const clearError = useCallback(() => setError(null), []);
+  const clearNotice = useCallback(() => setNotice(null), []);
 
   useEffect(() => {
     fetchFiles();
@@ -63,5 +74,8 @@ export function useFiles() {
     return () => clearInterval(timer);
   }, [files, fetchFiles]);
 
-  return { files, loading, error, uploading, fetchFiles, upload, remove, clearError };
+  return {
+    files, loading, error, notice, uploading,
+    fetchFiles, upload, remove, clearError, clearNotice,
+  };
 }

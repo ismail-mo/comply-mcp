@@ -14,6 +14,8 @@ interface FileSidebarProps {
   onDelete: (file_id: string) => Promise<void>;
   error: string | null;
   clearError: () => void;
+  notice: string | null;
+  clearNotice: () => void;
 }
 
 interface FileItemProps {
@@ -30,11 +32,11 @@ function FileItem({ file, active, onSelect, onDelete }: FileItemProps) {
     <div
       className="group relative flex w-full cursor-pointer items-center gap-2 px-3 py-2 transition-colors duration-150"
       style={{
-        borderLeft: `2px solid ${active ? 'var(--accent)' : 'transparent'}`,
-        background: active ? 'var(--bg-hover)' : 'transparent',
+        borderLeft: `2px solid ${active ? 'var(--text-accent)' : 'transparent'}`,
+        background: active ? 'var(--surface-2)' : 'transparent',
       }}
       onMouseEnter={(e) => {
-        if (!active) (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-hover)';
+        if (!active) (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-2)';
       }}
       onMouseLeave={(e) => {
         if (!active) (e.currentTarget as HTMLDivElement).style.background = 'transparent';
@@ -43,7 +45,7 @@ function FileItem({ file, active, onSelect, onDelete }: FileItemProps) {
     >
       <span
         className="shrink-0 text-base leading-none"
-        style={{ color: isPdf ? 'var(--danger)' : 'var(--success)' }}
+        style={{ color: 'var(--text-muted)' }}
       >
         ▪
       </span>
@@ -57,7 +59,7 @@ function FileItem({ file, active, onSelect, onDelete }: FileItemProps) {
         </p>
         <p
           className="text-[9px] uppercase leading-tight"
-          style={{ color: isPdf ? 'var(--danger)' : 'var(--success)' }}
+          style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
         >
           {isPdf ? 'PDF' : 'XLS'}
         </p>
@@ -66,7 +68,7 @@ function FileItem({ file, active, onSelect, onDelete }: FileItemProps) {
       {file.rag_status === 'pending' && (
         <span
           className="shrink-0 animate-pulse text-[8px] uppercase"
-          style={{ color: 'var(--warning)' }}
+          style={{ color: 'var(--error-fg)' }}
           title="Indexing document for search…"
         >
           ●
@@ -75,20 +77,20 @@ function FileItem({ file, active, onSelect, onDelete }: FileItemProps) {
       {file.rag_status === 'failed' && (
         <span
           className="shrink-0 text-[8px] uppercase"
-          style={{ color: 'var(--danger)' }}
+          style={{ color: 'var(--fail-fg)' }}
           title={`Indexing failed${file.rag_error ? `: ${file.rag_error}` : ''}`}
         >
           ●
         </span>
       )}
       <span
-        className="shrink-0 text-[8px] uppercase px-1.5 py-0.5"
+        className="shrink-0 text-[8px] uppercase px-1.5 py-0.5 rounded"
         style={
           file.classification === 'STANDARD'
-            ? { color: '#a78bfa', border: '1px solid rgba(167, 139, 250, 0.45)' }
+            ? { color: 'var(--cite-en1990-fg)', background: 'var(--cite-en1990-bg)' }
             : file.classification === 'UNKNOWN'
               ? { color: 'var(--text-muted)', border: '1px solid var(--border)' }
-              : { color: 'var(--accent)', border: '1px solid rgba(232, 240, 74, 0.4)' }
+              : { color: 'var(--cite-ec3-fg)', background: 'var(--cite-ec3-bg)' }
         }
         title={
           file.classification === 'STANDARD'
@@ -104,7 +106,7 @@ function FileItem({ file, active, onSelect, onDelete }: FileItemProps) {
       <button
         className="shrink-0 text-[14px] leading-none opacity-0 transition-opacity group-hover:opacity-100"
         style={{ color: 'var(--text-muted)' }}
-        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = 'var(--danger)')}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = 'var(--fail-fg)')}
         onMouseLeave={(e) =>
           ((e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)')
         }
@@ -129,6 +131,8 @@ export const FileSidebar = memo(function FileSidebar({
   onDelete,
   error,
   clearError,
+  notice,
+  clearNotice,
 }: FileSidebarProps) {
   const onDrop = useCallback(
     (accepted: File[]) => {
@@ -152,7 +156,7 @@ export const FileSidebar = memo(function FileSidebar({
   });
 
   return (
-    <div className="flex h-full w-full flex-col" style={{ background: 'var(--bg-panel)' }}>
+    <div className="flex h-full w-full flex-col" style={{ background: 'var(--surface-1)' }}>
       {/* Header */}
       <div
         className="shrink-0 px-4 py-3"
@@ -171,17 +175,39 @@ export const FileSidebar = memo(function FileSidebar({
         <div
           className="shrink-0 flex items-center justify-between px-3 py-2"
           style={{
-            background: 'rgba(248, 113, 113, 0.15)',
-            borderBottom: '1px solid rgba(248, 113, 113, 0.4)',
+            background: 'var(--fail-bg)',
+            borderBottom: '1px solid var(--border)',
           }}
         >
-          <span className="text-[11px]" style={{ color: 'var(--danger)' }}>
+          <span className="text-[11px]" style={{ color: 'var(--fail-fg)' }}>
             {error}
           </span>
           <button
             className="ml-2 shrink-0 text-[14px] leading-none"
-            style={{ color: 'var(--danger)' }}
+            style={{ color: 'var(--fail-fg)' }}
             onClick={clearError}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Index-ready notice (Stage 0 result) */}
+      {notice && (
+        <div
+          className="shrink-0 flex items-start justify-between px-3 py-2"
+          style={{
+            background: 'var(--pass-bg)',
+            borderBottom: '1px solid var(--border)',
+          }}
+        >
+          <span className="text-[11px] leading-snug" style={{ color: 'var(--pass-fg)' }}>
+            {notice}
+          </span>
+          <button
+            className="ml-2 shrink-0 text-[14px] leading-none"
+            style={{ color: 'var(--pass-fg)' }}
+            onClick={clearNotice}
           >
             ×
           </button>
@@ -226,8 +252,8 @@ export const FileSidebar = memo(function FileSidebar({
           {...getRootProps()}
           className="flex h-full cursor-pointer flex-col items-center justify-center gap-1 m-2 rounded"
           style={{
-            border: `1px dashed ${isDragActive ? 'var(--accent)' : 'var(--border)'}`,
-            background: isDragActive ? 'var(--accent-dim)' : 'var(--bg-base)',
+            border: `1px dashed ${isDragActive ? 'var(--text-accent)' : 'var(--border-strong)'}`,
+            background: isDragActive ? 'rgba(24, 95, 165, 0.08)' : 'var(--surface-1)',
             transition: 'border-color 150ms, background 150ms',
           }}
         >
@@ -235,7 +261,7 @@ export const FileSidebar = memo(function FileSidebar({
           {uploading ? (
             <p
               className="animate-pulse text-[11px]"
-              style={{ color: 'var(--accent)' }}
+              style={{ color: 'var(--text-accent)' }}
             >
               Uploading...
             </p>

@@ -31,3 +31,8 @@ backend/audits/*
 
 # Logs
 *.log
+
+# Reference material — copyright, build-time only (Blue Book, Eurocodes,
+# SCI worked examples, coursework). Transcribed numbers in tables/ and
+# tests/ are facts and ARE committed; the source PDFs are not.
+reference/

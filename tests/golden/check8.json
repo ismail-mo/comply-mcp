@@ -1,0 +1,194 @@
+{
+  "findings": [
+    {
+      "action": "Upsize the section or reduce the axial load until NEd / Nc,Rd <= 1.0 per Eurocode 3, Section 6.2.4.",
+      "assumed_inputs": [
+        "fy"
+      ],
+      "badge": "ec3",
+      "calc": {
+        "label": "Column compression \u2014 Calculation summary \u2014 13 lines",
+        "lines": [
+          "Input values",
+          "------------------------------------------",
+          "NEd     = 6,896.25 kN   > column_check_8.pdf . p.15",
+          "A       = 168   > Steel Blue Book . SCI P363 pp.74-75",
+          "fy      = 275 N/mm2   > column_check_8.pdf . p.8",
+          "",
+          "Formula \u2014 Eurocode 3, Section 6.2.4",
+          "A = 168.0 cm2 = 16800 mm2",
+          "Nc,Rd = A fy / gM0 = (16800 x 275) / 1.0 = 4620.00 kN   [EC3 6.2.4(2) Eq 6.10]",
+          "NEd / Nc,Rd = 6896.25 / 4620.00 = 1.49 <= 1.0   [EC3 6.2.4(1) Eq 6.9]",
+          "",
+          "Result",
+          "NEd / Nc,Rd = 6,896.25 / 4,620 = 1.49 > 1.0   [FAIL]"
+        ]
+      },
+      "category_sub": "Structural . resistance",
+      "check_id": "compression",
+      "clause": "Eurocode 3, Section 6.2.4",
+      "issue": "Exceeds the column compression limit because NEd = 6,896.25 kN > Nc,Rd = 4,620 kN (1.49 > 1.0).",
+      "metrics": {
+        "capacity": 4620.0,
+        "computed": 4620.0,
+        "delta": 2276.2,
+        "demand": 6896.25,
+        "ratio": 1.49,
+        "status": "FAIL"
+      },
+      "name": "Column compression",
+      "reference": {
+        "clause": "Eurocode 3, Section 6.2.4",
+        "page": 15,
+        "quote": "Total Axial Load = 6896.25",
+        "source": "column_check_8.pdf"
+      },
+      "status": "FAIL"
+    },
+    {
+      "action": "Upsize the column section to raise the radius of gyration and reduce slenderness, then recheck chi and Nb,Rd per Eurocode 3, Section 6.3.1.",
+      "assumed_inputs": [
+        "Le",
+        "fy"
+      ],
+      "badge": "ec3",
+      "calc": {
+        "label": "Column buckling \u2014 Calculation summary \u2014 24 lines",
+        "lines": [
+          "Input values",
+          "------------------------------------------",
+          "NEd     = 6,896.25 kN   > column_check_8.pdf . p.15",
+          "A       = 168   > Steel Blue Book . SCI P363 pp.74-75",
+          "iz      = 6.69   > Steel Blue Book . SCI P363 pp.74-75",
+          "Le      = 3.22 m   > column_check_8.pdf . p.9",
+          "fy      = 275 N/mm2   > column_check_8.pdf . p.8",
+          "section_type= UC   > Steel Blue Book . SCI P363 pp.74-75",
+          "axis    = minor   > Steel Blue Book . SCI P363 pp.74-75",
+          "",
+          "Formula \u2014 Eurocode 3, Section 6.3.1",
+          "Buckling curve (UC, minor axis) = 'c'   [EC3 Table 6.2]",
+          "alpha = 0.49   [EC3 Table 6.1]",
+          "Npl,Rd = A fy / gM1 = (16800 x 275) / 1.0 = 4620.0 kN   [EC3 6.3.1.1 Eq 6.47]",
+          "lambda = Le / i = 3220 / 66.9 = 48.13   [EC3 6.3.1.3(1)]",
+          "lambda_1 = 93.9 epsilon = 93.9 x sqrt(235/275) = 86.80   [EC3 6.3.1.3(1)]",
+          "lambda_bar = 48.13 / 86.80 = 0.554   [EC3 6.3.1.3(1) Eq 6.50]",
+          "phi = 0.5 (1 + 0.49 (0.554 - 0.2) + 0.554^2) = 0.741   [EC3 6.3.1.2(1)]",
+          "chi = 1 / (0.741 + sqrt(0.741^2 - 0.554^2)) = 0.812   [EC3 6.3.1.2(1) Eq 6.49]",
+          "Nb,Rd = chi Npl,Rd = 0.812 x 4620.0 = 3751.5 kN   [EC3 6.3.1.1 Eq 6.47]",
+          "NEd / Nb,Rd = 6896.25 / 3751.5 = 1.838   [EC3 6.3.1.1 Eq 6.46]",
+          "",
+          "Result",
+          "NEd / Nb,Rd = 6,896.25 / 3,751.5 = 1.84 > 1.0   [ERROR]"
+        ]
+      },
+      "category_sub": "Structural . ULS",
+      "check_id": "flex_buckling",
+      "clause": "Eurocode 3, Section 6.3.1",
+      "issue": "The document states Nb,Rd = 4,059.17 kN, but the code-correct value is 3,751.5 kN (8.2% discrepancy). The code-correct resistance is still exceeded (NEd / Nb,Rd = 1.84 > 1.0).",
+      "metrics": {
+        "capacity": 3751.5,
+        "computed": 3751.52,
+        "delta": 3144.7,
+        "demand": 6896.25,
+        "discrepancy_pct": 8.2,
+        "engineer": 4059.17,
+        "ratio": 1.84,
+        "status": "ERROR"
+      },
+      "name": "Column buckling",
+      "reference": {
+        "clause": "Eurocode 3, Section 6.3.1",
+        "page": 15,
+        "quote": "Total Axial Load = 6896.25",
+        "source": "column_check_8.pdf"
+      },
+      "status": "ERROR"
+    },
+    {
+      "action": "Confirm the steel grade on the section order and take fy from the EN 10025-2 thickness band for the actual flange thickness.",
+      "assumed_inputs": [],
+      "badge": "en10025",
+      "calc": null,
+      "category_sub": "Structural . material",
+      "check_id": "steel_grade",
+      "clause": "EN 10025-2",
+      "issue": "fy taken as 275 N/mm2, but for S275 with tf = 25.3 mm the EN 10025-2 thickness band gives fy = 265 N/mm2. Every resistance computed from 275 is overstated.",
+      "metrics": {
+        "claimed_fy": 275,
+        "correct_fy": 265.0,
+        "tf": 25.3
+      },
+      "name": "Steel grade",
+      "reference": {
+        "clause": "EN 10025-2",
+        "page": 8,
+        "quote": "grade S275",
+        "source": "column_check_8.pdf"
+      },
+      "status": "ERROR"
+    },
+    {
+      "action": "Reapply the ULS combination with gamma_G = 1.35 and gamma_Q = 1.50 per EN 1990, Section A1.3, then carry the corrected axial load through all downstream checks.",
+      "assumed_inputs": [],
+      "badge": "en1990",
+      "calc": null,
+      "category_sub": "Structural . ULS",
+      "check_id": "load_combo",
+      "clause": "EN 1990, Section A1.3",
+      "issue": "No load combinations check is presented \u2014 required inputs (Gk, Qk) not found in the document. EN 1990, Section A1.3 requires this check.",
+      "metrics": {},
+      "name": "Load combinations",
+      "reference": {
+        "clause": "EN 1990, Section A1.3",
+        "page": null,
+        "quote": null,
+        "source": "column_check_8.pdf"
+      },
+      "status": "MISSING"
+    },
+    {
+      "action": "Compute the design shear force and verify VEd / Vpl,Rd <= 1.0 per Eurocode 3, Section 6.2.6.",
+      "assumed_inputs": [],
+      "badge": "ec3",
+      "calc": null,
+      "category_sub": "Structural . ULS",
+      "check_id": "shear",
+      "clause": "Eurocode 3, Section 6.2.6",
+      "issue": "No column shear check is presented \u2014 required input (VEd) not found in the document. Eurocode 3, Section 6.2.6 requires this check.",
+      "metrics": {},
+      "name": "Column shear",
+      "reference": {
+        "clause": "Eurocode 3, Section 6.2.6",
+        "page": 8,
+        "quote": "grade S275",
+        "source": "column_check_8.pdf"
+      },
+      "status": "MISSING"
+    },
+    {
+      "action": "Calculate the c/t ratios for flange and web and verify the claimed class against Eurocode 3, Section 5.5, Table 5.2 before relying on plastic resistance.",
+      "assumed_inputs": [],
+      "badge": "ec3",
+      "calc": null,
+      "category_sub": "Structural . classification",
+      "check_id": "section_class",
+      "clause": "Eurocode 3, Section 5.5",
+      "issue": "The document asserts Class 1 but no c/t ratio is calculated to confirm it. Eurocode 3, Section 5.5 requires classification before plastic resistance can be used. Engineer judgement required.",
+      "metrics": {},
+      "name": "Cross-section class",
+      "reference": {
+        "clause": "Eurocode 3, Section 5.5",
+        "page": 8,
+        "quote": "grade S275",
+        "source": "column_check_8.pdf"
+      },
+      "status": "WARNING"
+    }
+  ],
+  "summary": {
+    "ERROR": 2,
+    "FAIL": 1,
+    "MISSING": 2,
+    "WARNING": 1
+  }
+}

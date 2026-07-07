@@ -125,8 +125,8 @@ function buildRects(
 }
 
 const toolbarButtonStyle: React.CSSProperties = {
-  background: 'transparent',
-  border: '1px solid var(--border)',
+  background: 'var(--surface-2)',
+  border: '1px solid var(--border-strong)',
   color: 'var(--text-secondary)',
   width: 24,
   height: 22,
@@ -241,8 +241,8 @@ export function PdfViewer({ fileId, activeCitation }: PdfViewerProps) {
                   top: `${rect.top}%`,
                   width: `${rect.width}%`,
                   height: `${rect.height}%`,
-                  background: 'rgba(232, 240, 74, 0.32)',
-                  outline: '1.5px solid rgba(232, 240, 74, 0.85)',
+                  background: 'rgba(24, 95, 165, 0.22)',
+                  outline: '1px solid rgba(24, 95, 165, 0.65)',
                   borderRadius: 2,
                   mixBlendMode: 'multiply',
                 }}
@@ -264,16 +264,16 @@ export function PdfViewer({ fileId, activeCitation }: PdfViewerProps) {
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: 'var(--bg-base)',
+        background: 'var(--surface-0)',
       }}
     >
       <style>{`
         @keyframes comply-highlight-pulse {
-          0% { box-shadow: 0 0 0 6px rgba(232, 240, 74, 0.45); }
-          100% { box-shadow: 0 0 0 0 rgba(232, 240, 74, 0); }
+          0% { box-shadow: 0 0 0 6px rgba(24, 95, 165, 0.35); }
+          100% { box-shadow: 0 0 0 0 rgba(24, 95, 165, 0); }
         }
         .comply-highlight { animation: comply-highlight-pulse 1.2s ease-out 2; }
-        .rpv-core__inner-page { background: var(--bg-base) !important; }
+        .rpv-core__inner-page { background: var(--surface-0) !important; }
       `}</style>
 
       {/* Slim toolbar */}
@@ -284,12 +284,12 @@ export function PdfViewer({ fileId, activeCitation }: PdfViewerProps) {
           justifyContent: 'space-between',
           padding: '4px 12px',
           borderBottom: '1px solid var(--border)',
-          background: 'var(--bg-panel)',
+          background: 'var(--surface-1)',
           flexShrink: 0,
           gap: 8,
         }}
       >
-        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
           {pageCount > 0 ? `Page ${currentPage} / ${pageCount}` : 'Loading…'}
         </span>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -325,12 +325,13 @@ export function PdfViewer({ fileId, activeCitation }: PdfViewerProps) {
             top: 48,
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'var(--bg-panel)',
-            border: '1px solid var(--border)',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border-strong)',
             color: 'var(--text-secondary)',
             fontSize: 11,
             padding: '6px 12px',
             borderRadius: 4,
+            boxShadow: '0 2px 8px rgba(26, 26, 24, 0.10)',
             zIndex: 10,
           }}
         >
@@ -345,7 +346,7 @@ export function PdfViewer({ fileId, activeCitation }: PdfViewerProps) {
             defaultScale={SpecialZoomLevel.PageWidth}
             plugins={[pageNavigation, zoom]}
             renderPage={renderPage}
-            theme="dark"
+            theme="light"
             onDocumentLoad={(e) => {
               setDocLoaded(true);
               setPageCount(e.doc.numPages);
@@ -358,7 +359,7 @@ export function PdfViewer({ fileId, activeCitation }: PdfViewerProps) {
                   height: '100%',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--danger)',
+                  color: 'var(--fail-fg)',
                   fontSize: 12,
                 }}
               >

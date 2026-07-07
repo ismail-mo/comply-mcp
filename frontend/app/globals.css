@@ -1,23 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── LIGHT THEME TOKENS (spec Part 9.1 — applies to all three views) ── */
 :root {
-  --bg-base: #0d0d0f;
-  --bg-panel: #141416;
-  --bg-hover: #1c1c1f;
-  --border: #222226;
-  --accent: #e8f04a;
-  --accent-dim: rgba(232, 240, 74, 0.12);
-  --text-primary: #f0f0ec;
-  --text-secondary: #888884;
-  --text-muted: #555552;
-  --success: #4ade80;
-  --warning: #fb923c;
-  --danger: #f87171;
+  --surface-0: #FAFAF8;   /* page background      */
+  --surface-1: #F4F3EF;   /* subtle card fill     */
+  --surface-2: #FFFFFF;   /* raised card / white  */
+  --text-primary: #1A1A18;
+  --text-secondary: #52514E;
+  --text-muted: #898781;
+  --text-accent: #185FA5;  /* links / pdf source   */
+  --border: rgba(26, 26, 24, 0.10);
+  --border-strong: rgba(26, 26, 24, 0.18);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --radius: 4px;
+
+  /* status palette — badges, pills, overview count phrases */
+  --fail-bg: #FCEBEB;    --fail-fg: #A32D2D;
+  --error-bg: #FAEEDA;   --error-fg: #854F0B;
+  --missing-bg: #E6F1FB; --missing-fg: #185FA5;
+  --assumed-bg: #EEEDFE; --assumed-fg: #534AB7;
+  --warning-bg: #F1EFE8; --warning-fg: #5F5E5A;
+  --pass-bg: #EAF3DE;    --pass-fg: #3B6D11;
+  --conflict-bg: #FCEBEB; --conflict-fg: #7A2E52;
+
+  /* citation badge palette (Part 8.2) */
+  --cite-ec3-bg: #E6F1FB;    --cite-ec3-fg: #185FA5;
+  --cite-en1990-bg: #EEEDFE; --cite-en1990-fg: #534AB7;
+  --cite-en10025-bg: #EAF3DE; --cite-en10025-fg: #3B6D11;
+  --cite-report-bg: #FAEEDA; --cite-report-fg: #854F0B;
+  --cite-sbb-bg: #FAEEDA;    --cite-sbb-fg: #854F0B;
+
+  /* legacy aliases — older components keep rendering correctly on light */
+  --bg-base: var(--surface-0);
+  --bg-panel: var(--surface-1);
+  --bg-hover: #ECEAE4;
+  --accent: #185FA5;
+  --accent-dim: rgba(24, 95, 165, 0.10);
+  --success: #3B6D11;
+  --warning: #854F0B;
+  --danger: #A32D2D;
 }
 
 html,
@@ -25,15 +49,16 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: var(--bg-base);
+  background-color: var(--surface-0);
   color: var(--text-primary);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -41,9 +66,28 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--border-strong);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* panel splitter */
+.comply-splitter {
+  width: 5px;
+  cursor: col-resize;
+  flex-shrink: 0;
+  background: transparent;
+  border-left: 1px solid var(--border);
+  transition: background 120ms;
+}
+.comply-splitter:hover,
+.comply-splitter.dragging {
+  background: rgba(24, 95, 165, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }
